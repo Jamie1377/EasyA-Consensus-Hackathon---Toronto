@@ -21,8 +21,8 @@ load_dotenv()
 # print(f"FAUCET_AUTH_TOKEN: {FAUCET_AUTH_TOKEN}")
 
 # Initialize clients
-rest_client = RestClient("https://api.testnet.aptoslabs.com/v1")
-faucet_client = FaucetClient("https://faucet.testnet.aptoslabs.com", rest_client)
+rest_client = RestClient("https://api.devnet.aptoslabs.com/v1")
+faucet_client = FaucetClient("https://faucet.devnet.aptoslabs.com", rest_client)
 token_client = AptosTokenClient(rest_client)
 
 async def fund_wallet(wallet_address, amount):
