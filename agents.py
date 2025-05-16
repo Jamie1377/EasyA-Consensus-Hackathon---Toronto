@@ -16,18 +16,45 @@ loop = asyncio.new_event_loop()
 asyncio.set_event_loop(loop)
 
 # Generate a new wallet
-#do not do this in production, for experimental purposes only
-wallet = Account.load_key("0x63ae44a3e39c934a7ae8064711b8bac0699ece6864f4d4d5292b050ab77b4f6b") 
-address = str(wallet.address())
+# do not do this in production, for experimental purposes only
+wallet_file = os.path.join(os.path.dirname(__file__), "aptos_wallet.json")
+if os.path.exists(wallet_file):
+    with open(wallet_file, "r") as f:
+        wallet = json.load(f)
+        private_key = wallet["private_key"]
+        address = wallet["address"]
+        public_key = wallet["public_key"]
+        print(f"Existing Account:\nPrivate Key: {private_key}\nAddress: {address}")
+else:
+    # create a directory to the file
+    os.makedirs(os.path.dirname(wallet_file), exist_ok=True)
+
+    account = Account.generate()
+    private_key = str(account.private_key)
+    address = str(account.address())
+    public_key = str(account.public_key())
+    print(f"New Account:\nPrivate Key: {private_key}\nAddress: {address}")
+    with open(wallet_file, "w") as f:
+        json.dump(
+            {"private_key": private_key, "address": address, "public_key": public_key},
+            f,
+            indent=4,
+        )
+    print(f"New account generated and saved to {wallet_file}")
+# wallet = Account.load_key("")
+# address = str(wallet.address())
+
 
 def get_weather(location, time="now"):
     """Get the current weather in a given location. Location MUST be a city."""
     return json.dumps({"location": location, "temperature": "65", "time": time})
 
+
 def send_email(recipient, subject, body):
     print("Sending email...")
     print(f"To: {recipient}\nSubject: {subject}\nBody: {body}")
     return "Sent!"
+
 
 def fund_wallet_in_apt_sync(amount: int):
     try:
@@ -35,11 +62,13 @@ def fund_wallet_in_apt_sync(amount: int):
     except Exception as e:
         return f"Error funding wallet: {str(e)}"
 
+
 def get_balance_in_apt_sync():
     try:
         return loop.run_until_complete(get_balance(address))
     except Exception as e:
         return f"Error getting balance: {str(e)}"
+
 
 def transfer_in_octa_sync(sender, receiver, amount: int):
     try:
@@ -47,52 +76,58 @@ def transfer_in_octa_sync(sender, receiver, amount: int):
     except Exception as e:
         return f"Error transferring funds: {str(e)}"
 
+
 def create_token_sync(sender, name: str, symbol: str, icon_uri: str, project_uri: str):
     try:
-        return loop.run_until_complete(create_token(wallet, name, symbol, icon_uri, project_uri))
+        return loop.run_until_complete(
+            create_token(wallet, name, symbol, icon_uri, project_uri)
+        )
     except Exception as e:
         print(f"Error creating token: {str(e)}")
         return f"Error creating token: {str(e)}"
 
+
 def post_tweet(tweet_text: str):
     url = "https://api.twitter.com/2/tweets"
-    
+
     auth = OAuth1(
         os.getenv("TWITTER_API_KEY"),
         os.getenv("TWITTER_API_SECRET"),
         os.getenv("TWITTER_ACCESS_TOKEN"),
-        os.getenv("TWITTER_ACCESS_TOKEN_SECRET")
+        os.getenv("TWITTER_ACCESS_TOKEN_SECRET"),
     )
-    payload = {
-        "text": tweet_text
-    }
-    
+    payload = {"text": tweet_text}
+
     try:
         response = requests.post(url, auth=auth, json=payload)
         response.raise_for_status()
         return response.json()
     except requests.exceptions.RequestException as e:
         return f"Error posting tweet: {str(e)}"
-    
+
+
 def close_event_loop():
     loop.close()
+
 
 aptos_agent = Agent(
     name="Aptos Agent",
     model="gpt-4o",
-    instructions=
-    ("You are a helpful agent that can interact on-chain on the Aptos Layer 1 blockchain using the Aptos SDK. "
-     "You can create custom Move modules, transfer assets, "
-     "and perform token swaps. If you ever need to know your address, it is {address}. "
-     "If you ever need test funds, you can request them from the Aptos Testnet Faucet. "
-     "You can also deploy your own Move-based tokens, NFTs, and interact with them. "
-     "If someone asks you to do something you can’t do, you can say so and encourage them to implement it themselves using the Aptos SDK. "
-     "Recommend they visit aptos.dev for more information. "
-     "You can also offer to help them implement it by writing the function and instructing them to add it to the agents.py file and your list of callable functions."
-     ),
+    instructions=(
+        "You are a helpful agent that can interact on-chain on the Aptos Layer 1 blockchain using the Aptos SDK. "
+        "You can create custom Move modules, transfer assets, "
+        "and perform token swaps. If you ever need to know your address, it is {address}. "
+        "If you ever need test funds, you can request them from the Aptos Testnet Faucet. "
+        "You can also deploy your own Move-based tokens, NFTs, and interact with them. "
+        "If someone asks you to do something you can’t do, you can say so and encourage them to implement it themselves using the Aptos SDK. "
+        "Recommend they visit aptos.dev for more information. "
+        "You can also offer to help them implement it by writing the function and instructing them to add it to the agents.py file and your list of callable functions."
+    ),
     functions=[
-        fund_wallet_in_apt_sync, get_balance_in_apt_sync,
-        transfer_in_octa_sync, create_token_sync, post_tweet
+        fund_wallet_in_apt_sync,
+        get_balance_in_apt_sync,
+        transfer_in_octa_sync,
+        create_token_sync,
+        post_tweet,
     ],
 )
-

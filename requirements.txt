@@ -11,6 +11,7 @@ cffi==1.17.1
 cfgv==3.4.0
 charset-normalizer==3.4.0
 click==8.1.7
+coindesk==1.1.0
 distlib==0.3.9
 distro==1.9.0
 docstring_parser==0.16
@@ -27,16 +28,20 @@ instructor==1.7.0
 Jinja2==3.1.4
 jiter==0.6.1
 markdown-it-py==3.0.0
+matplotlib==3.10.1
 MarkupSafe==3.0.2
 mdurl==0.1.2
 multidict==6.1.0
 nodeenv==1.9.1
-numpy==2.1.3
+# numpy==2.1.3
+numpy==1.26.4
 oauthlib==3.2.2
 openai==1.56.2
 packaging==24.2
 parse==1.20.2
 parse_type==0.6.4
+pandas==2.1.3
+pandas_market_calendars==4.6.1
 platformdirs==4.3.6
 pluggy==1.5.0
 pre_commit==4.0.1
@@ -67,3 +72,5 @@ urllib3==2.2.3
 virtualenv==20.28.0
 websockets==14.1
 yarl==1.18.3
+yfinance==0.2.54
+
