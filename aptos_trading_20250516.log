@@ -1489,3 +1489,21 @@
 1 Failed download:
 2025-05-16 11:32:38,292 - ERROR - ['APT21794-USD']: YFRateLimitError('Too Many Requests. Rate limited. Try after a while.')
 2025-05-16 11:32:38,301 - ERROR - No data available for APT21794-USD in the specified date range
+2025-05-16 11:43:01,997 - INFO - HTTP Request: POST https://fullnode.devnet.aptoslabs.com/v1/view "HTTP/1.1 200 OK"
+2025-05-16 11:43:02,177 - INFO - HTTP Request: POST https://fullnode.devnet.aptoslabs.com/v1/view "HTTP/1.1 200 OK"
+2025-05-16 11:43:02,234 - INFO - HTTP Request: GET https://fullnode.devnet.aptoslabs.com/v1 "HTTP/1.1 200 OK"
+2025-05-16 11:43:02,308 - INFO - HTTP Request: GET https://fullnode.devnet.aptoslabs.com/v1/accounts/0x0d835ed8ba506f02603bac2d2f3f8519e33dbcbc058fda9ea1762a5ab6188f6a "HTTP/1.1 200 OK"
+2025-05-16 11:43:02,366 - INFO - HTTP Request: GET https://fullnode.devnet.aptoslabs.com/v1/accounts/0x0d835ed8ba506f02603bac2d2f3f8519e33dbcbc058fda9ea1762a5ab6188f6a "HTTP/1.1 200 OK"
+2025-05-16 11:43:02,470 - INFO - HTTP Request: POST https://fullnode.devnet.aptoslabs.com/v1/transactions/simulate "HTTP/1.1 200 OK"
+2025-05-16 11:43:02,561 - INFO - HTTP Request: POST https://fullnode.devnet.aptoslabs.com/v1/transactions "HTTP/1.1 202 Accepted"
+2025-05-16 11:43:02,625 - INFO - HTTP Request: GET https://fullnode.devnet.aptoslabs.com/v1/transactions/by_hash/0x0f71df5ade6fb3f3d4d420be88cf6cae9e7ce8d77bc1dc90315e7247c8b9d6cc "HTTP/1.1 200 OK"
+2025-05-16 11:43:03,693 - INFO - HTTP Request: GET https://fullnode.devnet.aptoslabs.com/v1/transactions/by_hash/0x0f71df5ade6fb3f3d4d420be88cf6cae9e7ce8d77bc1dc90315e7247c8b9d6cc "HTTP/1.1 200 OK"
+2025-05-16 11:43:03,778 - INFO - HTTP Request: GET https://fullnode.devnet.aptoslabs.com/v1/transactions/by_hash/0x0f71df5ade6fb3f3d4d420be88cf6cae9e7ce8d77bc1dc90315e7247c8b9d6cc "HTTP/1.1 200 OK"
+2025-05-16 11:43:03,867 - INFO - HTTP Request: GET https://fullnode.devnet.aptoslabs.com/v1/transactions/by_hash/0x0f71df5ade6fb3f3d4d420be88cf6cae9e7ce8d77bc1dc90315e7247c8b9d6cc "HTTP/1.1 200 OK"
+2025-05-16 11:43:03,964 - INFO - HTTP Request: POST https://fullnode.devnet.aptoslabs.com/v1/view "HTTP/1.1 200 OK"
+2025-05-16 11:43:03,965 - INFO - AptosBacktester initialized with 14.998663 USD for APT21794-USD
+2025-05-16 11:43:03,966 - INFO - Starting backtest from 2024-01-01 to 2025-05-15
+2025-05-16 11:43:05,381 - ERROR - 
+1 Failed download:
+2025-05-16 11:43:05,381 - ERROR - ['APT21794-USD']: YFRateLimitError('Too Many Requests. Rate limited. Try after a while.')
+2025-05-16 11:43:05,390 - ERROR - No data available for APT21794-USD in the specified date range

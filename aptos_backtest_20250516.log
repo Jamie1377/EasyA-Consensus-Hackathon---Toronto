@@ -1318,3 +1318,6 @@
 2025-05-16 11:32:36,804 - INFO - AptosBacktester initialized with 14.998669 USD for APT21794-USD
 2025-05-16 11:32:36,804 - INFO - Starting backtest from 2024-01-01 to 2025-05-15
 2025-05-16 11:32:38,301 - ERROR - No data available for APT21794-USD in the specified date range
+2025-05-16 11:43:03,965 - INFO - AptosBacktester initialized with 14.998663 USD for APT21794-USD
+2025-05-16 11:43:03,966 - INFO - Starting backtest from 2024-01-01 to 2025-05-15
+2025-05-16 11:43:05,390 - ERROR - No data available for APT21794-USD in the specified date range
