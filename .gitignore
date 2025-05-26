@@ -2,3 +2,64 @@
 myenv/
 __pycache__/ 
 .DS_Store
+model_cache/
+docs/model_cache/
+stock_prediction/docs/model_cache/
+*.pkl
+*.joblib
+*.hash
+*.h5
+*.pth
+*.bin
+data_cache/
+model_cache/
+
+
+*.csv
+*.log
+# Additional large file formats
+*.parquet
+*.feather
+*.hdf5
+*.zarr
+*.npz
+*.npy
+*.mp4
+*.avi
+*.zip
+*.tar.gz
+*.tgz
+
+# Jupyter notebook checkpoints
+.ipynb_checkpoints/
+
+# IDE specific files
+.idea/
+.vscode/
+
+# Additional Python virtual environments
+venv/
+env/
+.venv/
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+
+# Tensorflow/PyTorch specific
+.tf_models/
+.torch_models/
+wandb/
+runs/# Private trading strategy files
+private_strat.py
+*_private.py
+*_strategy.py
+strategy_*.py
+aptos_portfolio.csv # Adding the large file that caused issues
+aptos_transactions.csv
+# Large data files
+*.csv # Or more specifically:
+aptos_portfolio.csv
+aptos_transactions.csv
+data_output/

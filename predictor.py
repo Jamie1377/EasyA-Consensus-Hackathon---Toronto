@@ -27,8 +27,130 @@ import hashlib
 # Alpaca API imports
 import os
 import requests
+import json
+def get_cached_data(tickers, start_date, end_date, interval="1d", cache_dir="data_cache"):
+    """
+    Fetch data from Yahoo Finance with caching to avoid rate limits
+    
+    Args:
+        tickers: String or list of ticker symbols
+        start_date: Start date for data
+        end_date: End date for data
+        interval: Data interval (1d, 1h, etc)
+        cache_dir: Directory to store cached data
+        
+    Returns:
+        DataFrame with the requested data
+    """
+    # Create cache directory if it doesn't exist
+    if not os.path.exists(cache_dir):
+        os.makedirs(cache_dir)
+    
+    # Convert tickers to list if it's a string
+    if isinstance(tickers, str):
+        tickers = [tickers]
+    
+    # Create a unique cache key for this request
+    cache_key = f"{'-'.join(sorted(tickers))}_{start_date}_{end_date}_{interval}"
+    hash_key = hashlib.md5(cache_key.encode()).hexdigest()
+    cache_file = os.path.join(cache_dir, f"{hash_key}.parquet")
+    metadata_file = os.path.join(cache_dir, f"{hash_key}.json")
+    
+    # Check if cached data exists and is fresh (less than 1 day old for end_date == today)
+    use_cache = False
+    if os.path.exists(cache_file) and os.path.exists(metadata_file):
+        with open(metadata_file, 'r') as f:
+            metadata = json.load(f)
+        
+        cache_date = datetime.strptime(metadata['cache_date'], '%Y-%m-%d %H:%M:%S')
+        is_recent_query = datetime.strptime(end_date, '%Y-%m-%d').date() >= (datetime.now() - timedelta(days=7)).date()
+        
+        # Cache is valid if it's less than 1 day old for recent queries
+        # or any age for historical queries
+        if is_recent_query:
+            use_cache = (datetime.now() - cache_date) < timedelta(days=1)
+        else:
+            use_cache = True
+            
+    if use_cache:
+        print(f"Using cached data for {tickers} ({start_date} to {end_date})")
+        data = pd.read_parquet(cache_file)
+    else:
+        # Need to download fresh data
+        print(f"Downloading fresh data for {tickers} ({start_date} to {end_date})")
+        try:
+            data = yf.download(
+                tickers,
+                start=start_date,
+                end=end_date,
+                interval=interval,
+                group_by='ticker' if len(tickers) > 1 else 'column',
+                auto_adjust=True,
+                progress=False
+            )
+            
+            # Save to cache
+            if not data.empty:
+                data.to_parquet(cache_file)
+                
+                # Save metadata
+                metadata = {
+                    'tickers': tickers,
+                    'start_date': start_date,
+                    'end_date': end_date,
+                    'interval': interval,
+                    'cache_date': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                }
+                
+                with open(metadata_file, 'w') as f:
+                    json.dump(metadata, f)
+        
+        except Exception as e:
+            print(f"Error downloading data: {str(e)}")
+            
+            # If cache exists but is outdated, use it as fallback
+            if os.path.exists(cache_file):
+                print(f"Using outdated cache as fallback")
+                data = pd.read_parquet(cache_file)
+            else:
+                # No cache and download failed
+                raise e
+    
+    return data
 
- 
+# Example directory structure for cache organization
+def organize_cache(cache_dir="data_cache"):
+    """Organize cache by ticker and timeframe"""
+    if not os.path.isdir(cache_dir):
+        return
+    
+    # List all cache files
+    files = [f for f in os.listdir(cache_dir) if f.endswith('.json')]
+    
+    for file in files:
+        metadata_path = os.path.join(cache_dir, file)
+        try:
+            with open(metadata_path, 'r') as f:
+                metadata = json.load(f)
+            
+            # Create organized structure
+            tickers_dir = os.path.join(cache_dir, '-'.join(metadata['tickers']))
+            if not os.path.exists(tickers_dir):
+                os.makedirs(tickers_dir)
+            
+            # Move files to organized location
+            cache_file = file.replace('.json', '.parquet')
+            if os.path.exists(os.path.join(cache_dir, cache_file)):
+                new_path = os.path.join(tickers_dir, cache_file)
+                new_metadata_path = os.path.join(tickers_dir, file)
+                
+                # Only move if destination doesn't exist
+                if not os.path.exists(new_path):
+                    os.rename(os.path.join(cache_dir, cache_file), new_path)
+                    os.rename(metadata_path, new_metadata_path)
+                
+        except Exception as e:
+            print(f"Error organizing {file}: {str(e)}")
 
 
 class StockPredictor:
@@ -77,6 +199,26 @@ class StockPredictor:
         self.data_hash = None
         self.forecast_record = {}
     
+    def _compute_rsi(self, window=14):
+        """Custom RSI implementation"""
+        delta = self.data["Close"].diff()
+        gain = delta.where(delta > 0, 0)
+        loss = -delta.where(delta < 0, 0)
+        return 100 - (
+            100 / (1 + (gain.rolling(window).mean() / loss.rolling(window).mean()))
+        )
+
+
+    def _compute_atr(self, window=14):
+        """Average True Range"""
+        high_low = self.data["High"] - self.data["Low"]
+        high_close = (self.data["High"] - self.data["Close"].shift()).abs()
+        low_close = (self.data["Low"] - self.data["Close"].shift()).abs()
+        tr = pd.concat([high_low, high_close, low_close], axis=1).max(axis=1)
+        return tr.rolling(window).mean()
+    
+
+    
     
     def load_data(self):
         """Load and prepare stock data with features"""
@@ -87,7 +229,6 @@ class StockPredictor:
             start=self.start_date,
             end=self.end_date,
             interval=self.interval,
-            timeout=0.5,
         )
         self.data.columns = self.data.columns.get_level_values(0)  # Remove multi-index
         self.data.ffill()
@@ -139,7 +280,7 @@ class StockPredictor:
         self.data["rolling_75p"] = self.data["Close"].rolling(window=50).quantile(0.75)
         # Drop rows with NaN values (due to rolling window)
         self.data.dropna(inplace=True)
-        stock_data.index.name = "Date"  # Ensure the index is named "Date"
+        # stock_data.index.name = "Date"  # Ensure the index is named "Date"
 
         ### 4. Advanced Momentum
         self.data["RSI"] = self._compute_rsi(window=14)
@@ -177,38 +318,101 @@ class StockPredictor:
 
         ### 9. Volume-based Features
         # self.data['OBV'] = self._compute_obv()
-        self.data["VWAP"] = (
-            self.data["Volume"]
-            * (self.data["High"] + self.data["Low"] + self.data["Close"])
-            / 3
-        ).cumsum() / self.data["Volume"].cumsum()
+        if self.data["Volume"].cumsum()[-1] != 0:
+            self.data["VWAP"] = (
+                self.data["Volume"]
+                * (self.data["High"] + self.data["Low"] + self.data["Close"])
+                / 3
+            ).cumsum() / self.data["Volume"].cumsum()
 
         ### 10. Economic Indicators
-        sp500 = yf.download("^GSPC", start=self.start_date, end=self.end_date, interval=self.interval,)["Close"]
-        # Fetch S&P 500 Index (GSPC) and Treasury Yield ETF (IEF) from Yahoo Finance
-        sp500 = sp500 - sp500.mean()
-        tnx = yf.download(
-            "^TNX", start=self.start_date, end=self.end_date, interval=self.interval, timeout=0.5,
-        )["Close"]
-        tnx_len = len(tnx)
-        treasury_yield = yf.download(
-            "IEF", start=self.start_date, end=self.end_date, interval=self.interval, timeout=0.5,
-        )["Close"]
-        exchange_rate = yf.download(
-            "USDCAD=X", start=self.start_date, end=self.end_date, interval=self.interval, timeout=0.5,
-        )["Close"]
-        technology_sector = yf.download(
-            "XLK", start=self.start_date, end=self.end_date, interval=self.interval, timeout=0.5,
-        )["Close"]
-        financials_sector = yf.download(
-            "XLF", start=self.start_date, end=self.end_date, interval=self.interval, timeout=0.5,
-        )["Close"]
-        energy_sector = yf.download(
-            "XLE", start=self.start_date, end=self.end_date, interval=self.interval, timeout=0.5,
-        )["Close"]
-        vix = yf.download(
-            "^VIX", start=self.start_date, end=self.end_date, interval=self.interval, timeout=0.5,
-        )["Close"]
+        # sp500 = yf.download("^GSPC", start=self.start_date, end=self.end_date, interval=self.interval,
+        #                   #  timeout=1,
+        #                     )["Close"]
+        # # Fetch S&P 500 Index (GSPC) and Treasury Yield ETF (IEF) from Yahoo Finance
+        # sp500 = sp500 - sp500.mean()
+        # tnx = yf.download(
+        #     "^TNX", start=self.start_date, end=self.end_date, interval=self.interval,# timeout=1,
+        # )["Close"]
+        # tnx_len = len(tnx)
+        # treasury_yield = yf.download(
+        #     "IEF", start=self.start_date, end=self.end_date, interval=self.interval, #timeout=1,
+        # )["Close"]
+        # exchange_rate = yf.download(
+        #     "USDCAD=X", start=self.start_date, end=self.end_date, interval=self.interval, #timeout=1,
+        # )["Close"]
+        # technology_sector = yf.download(
+        #     "XLK", start=self.start_date, end=self.end_date, interval=self.interval,# timeout=1,
+        # )["Close"]
+        # financials_sector = yf.download(
+        #     "XLF", start=self.start_date, end=self.end_date, interval=self.interval, #timeout=1,
+        # )["Close"]
+        # energy_sector = yf.download(
+        #     "XLE", start=self.start_date, end=self.end_date, interval=self.interval, #timeout=1,
+        # )["Close"]
+        # vix = yf.download(
+        #     "^VIX", start=self.start_date, end=self.end_date, interval=self.interval, #timeout=1,
+        # )["Close"]
+
+        # Replace the individual downloads with a single batched download
+
+        # Batch download all economic indicators at once
+        economic_tickers = ["^GSPC", "^TNX", "IEF", "USDCAD=X", "XLK", "XLF", "XLE", "^VIX"]
+        try:
+            print("Trying to fetch economic data from cache...")
+            economic_data = get_cached_data(
+                economic_tickers,
+                start_date=self.start_date,
+                end_date=self.end_date,
+                interval=self.interval,
+                cache_dir="data_cache"
+            )
+        except Exception as e:
+            print(f"Cache fetch failed: {str(e)}. Downloading fresh data...")
+            economic_data = yf.download(
+                economic_tickers,
+                start=self.start_date, 
+                end=self.end_date,
+                interval=self.interval,
+                group_by='ticker',  # Group results by ticker
+                auto_adjust=True,   # Auto-adjust data
+                progress=False      # Disable progress bar
+            )
+
+        # Extract each indicator from the batched data
+        try:
+            sp500 = economic_data['^GSPC']['Close'] - economic_data['^GSPC']['Close'].mean()
+            tnx = economic_data['^TNX']['Close']
+            tnx_len = len(tnx)
+            treasury_yield = economic_data['IEF']['Close'] 
+            exchange_rate = economic_data['USDCAD=X']['Close']
+            technology_sector = economic_data['XLK']['Close']
+            financials_sector = economic_data['XLF']['Close']
+            energy_sector = economic_data['XLE']['Close']
+            vix = economic_data['^VIX']['Close']
+            
+            # Additional defensive code to handle missing data
+            for series_name, series in [
+                ("TNX", tnx), 
+                ("Treasury_Yield", treasury_yield),
+                ("Exchange Rate", exchange_rate),
+                ("Technology Sector", technology_sector),
+                ("Financial Sector", financials_sector),
+                ("Energy Sector", energy_sector),
+                ("VIX", vix)
+            ]:
+                if series.empty:
+                    print(f"Warning: {series_name} data is empty, filling with zeros")
+                    if series_name == "TNX":
+                        tnx = pd.Series(0, index=self.data.index)
+                        tnx_len = 0
+        except KeyError as e:
+            print(f"Warning: One or more economic indicators missing: {e}")
+            # Provide fallback values or skip the missing indicators
+
+
+
+
 
         # self.data["SP500"] = sp500
         # self.data["TNX"] = tnx
