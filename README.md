@@ -1,5 +1,16 @@
 # EasyA-Consensus-Hackathon---Toronto
 
+## Educational Disclaimer
+
+This repository contains code developed for the EasyA Consensus Hackathon in **Toronto, Canada**. This project is:
+- **PURELY EDUCATIONAL** and created for learning blockchain development concepts
+- **NOT ASSOCIATED** with any real cryptocurrency trading or financial activities
+- **NO REAL FUNDS** were used or are intended to be used with this codebase
+- **DEVELOPED SOLELY** for demonstration of technical concepts in a hackathon environment
+
+This project is **NOT** intended for production use or financial applications in the current stage.
+
+## Project Description
 This project builts based on [the repo from aptos-agent from aptos-labs](https://github.com/aptos-labs/aptos-agent).
 
 Aptos Agent Backtester: AI/ML-Powered Blockchain Trading Aptos Agent combines machine learning prediction with Aptos blockchain execution for automated trading. Features include **technical analysis signals**, on-chain transaction execution, **wallet management**, comprehensive **backtesting**, real-time **portfolio tracking**, and risk management parameters for DeFi traders.
@@ -13,17 +24,17 @@ Here is the snapshot of the project.
 [Here is the link of the presentation](https://www.canva.com/design/DAGnnzZRxhU/VGBKUeKuUp-0kf3HJntAHg/edit?utm_content=DAGnnzZRxhU&utm_campaign=designshare&utm_medium=link2&utm_source=sharebutton)
 
 
-# Technical Explanation
+## Technical Explanation
 
 Our Aptos Agent project leverages several key technologies:
 
-## Core Technologies
+### Core Technologies
 - **Python** for backend development and ML model & Strategy implementation
 - **Scikit-Learn/TensorFlow/PyTorch** for training prediction models
 - **Aptos Move** for smart contract development
 - **React** for frontend dashboard interface
 
-## Aptos Blockchain Technologies
+### Aptos Blockchain Technologies
 We specifically leveraged Aptos's unique features:
 
 1. **Move VM** - Used for secure, deterministic smart contract execution that enables our automated trading strategies with reliable transaction outcomes
