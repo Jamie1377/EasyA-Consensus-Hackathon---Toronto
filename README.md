@@ -33,14 +33,13 @@ Backtest Report: Total Return: 42.11%, Sharpe: 1.11, Max Drawdown: -15.51%, Win 
 Figure 3 represents the multi-stock portfolio backtesting visualization with three comprehensive panels:
 
 1. **Portfolio Performance Panel (Top)**
-- Blue line tracks the portfolio's normalized value, showing approximately 60% growth in the plot
+- Blue line tracks the portfolio's normalized value
 - **Green** triangles mark **buy** signals and **red** triangles indicate **sell** signals
 - Orange **SPGI** benchmark line demonstrates our strategy's outperformance, especially during market corrections
 - Portfolio maintains consistent growth trajectory with strategic entry/exit points
 
 2. **Portfolio Composition Panel (Middle)**
 * Stacked area chart visualizing asset allocation across multiple stocks and cash positions
-* Includes diverse holdings in 6 stocks: NFLX, MO, BKNG, MDLZ, SQ, and GD in this case
 * Dynamic allocation shows how the system actively rebalances based on market conditions
    
 
