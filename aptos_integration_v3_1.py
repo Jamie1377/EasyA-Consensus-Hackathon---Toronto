@@ -3168,7 +3168,7 @@ class AptosBacktester:
 
         return fig
 
-def select_stocks(num_stocks=5, universe="S&P 100", lookback_days=90, strategy="momentum"):
+def select_stocks(num_stocks=5, universe="S&P 100", lookback_days=90, strategy="momentum", end_date=None):
     """
     Select promising stocks from a universe based on fundamental and technical metrics
     
@@ -3213,7 +3213,10 @@ def select_stocks(num_stocks=5, universe="S&P 100", lookback_days=90, strategy="
         symbols = sorted(list(set(symbols)))
         
         # Define time periods for analysis
-        end_date = datetime.now()
+        if end_date is None:
+            end_date = datetime.now() 
+        else:
+            end_date = pd.to_datetime(end_date)
         start_date = end_date - timedelta(days=lookback_days)
         
         print(f"Analyzing {len(symbols)} stocks from {universe}...")
@@ -3804,15 +3807,21 @@ async def run_multi_stock_backtest():
     """Run a backtest with multiple stocks"""
     # Import necessary classes
     from predictor import StockPredictor
+    start_date = "2021-12-01"
+    end_date = "2025-05-31"
+   
+
+
 
     try:
-        selected_stocks = select_stocks(num_stocks=6,  universe="S&P 100", 
-            lookback_days=120,
-            strategy="blend"  # You can choose: "momentum", "value", "quality", or "blend"
+        selected_stocks = select_stocks(num_stocks=10,  universe="S&P 100", 
+            lookback_days= 150,
+            strategy="blend",  # You can choose: "momentum", "value", "quality", or "blend"
+            end_date=start_date
         )
     except:
         # Fallback if import fails
-        selected_stocks = ["AAPL", "MSFT", "GOOGL"]
+        selected_stocks = ["AAPL", "MSFT", "GOOGL", ""]
 
     
 
@@ -3822,8 +3831,8 @@ async def run_multi_stock_backtest():
     backtester = AptosBacktester(symbols=selected_stocks, initial_capital=100000)
 
     # Define time period
-    start_date = "2021-12-01"
-    end_date = "2025-05-31"
+    
+    
 
     # Run backtest using multi-stock signal generator
     history, metrics = backtester.run_backtest(
@@ -3843,6 +3852,11 @@ async def run_multi_stock_backtest():
     print(f"Max Drawdown: {metrics['max_drawdown']:.2%}")
     print(f"Win Rate: {metrics['win_rate']:.2%}")
     print(f"Total Trades: {metrics['num_trades']}")
+    print(f"Number of BUY trades: {metrics['num_buy_trades']}")
+    print(f"Number of SELL trades: {metrics['num_sell_trades']}")
+    print(f"CAGR: {metrics['cagr']:.2%}")
+    print(f"Sortino Ratio: {metrics['sortino']:.2f}")
+    
 
     # Plot results
     backtester.plot_results(history)

@@ -28,7 +28,7 @@ Figure 2 shows performance for a single asset (QBTS).
 \
 ![](Figure_3.png)
 ### Figure 3: Multi-Stock Portfolio Analysis Dashboard
-Backtest Report: Total Return: 62.01%, Sharpe: 2.15, Max Drawdown: -7.27%, Win Rate: 90.00%, Number of Trades: 707, CAGR: 21.17%, Sortino: 3.94
+Backtest Report: Total Return: 42.11%, Sharpe: 1.11, Max Drawdown: -15.51%, Win Rate: 59.80%, Number of Trades: 1694, CAGR: 15.02%, Sortino: 1.88
 
 Figure 3 represents the multi-stock portfolio backtesting visualization with three comprehensive panels:
 
