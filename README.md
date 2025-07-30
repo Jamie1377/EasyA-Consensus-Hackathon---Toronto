@@ -1,4 +1,5 @@
 # EasyA-Consensus-Hackathon---Toronto
+![](image.png) ![alt text](image-1.png)
 
 ## Educational Disclaimer
 
@@ -16,21 +17,36 @@ This project builts based on [the repo from aptos-agent from aptos-labs](https:/
 Aptos Agent Backtester: AI/ML-Powered Blockchain Trading Aptos Agent combines machine learning prediction with Aptos blockchain execution for automated trading. Features include **technical analysis signals**, on-chain transaction execution, **wallet management**, comprehensive **backtesting**, real-time **portfolio tracking**, and risk management parameters for DeFi traders.
 
 
-Here is the snapshot of the project. 
-
+Here is the snapshot of the output. 
 \
-![](Figure_2.png)
-### Figure 2: Single Stock Portfolio Analysis Dashboard
-
+\
+\
+![](vizualizations/Figure_2.png)
+### Figure 2: Single Stock Portfolio Analysis Dashboard 
 Figure 2 shows performance for a single asset (QBTS).
-\
-\
-\
-![](Figure_3.png)
+
+<br> 
+<br> 
+<br> 
+
+![](vizualizations/Figure_3.png)
 ### Figure 3: Multi-Stock Portfolio Analysis Dashboard
+
 Backtest Report: Total Return: 42.11%, Sharpe: 1.11, Max Drawdown: -15.51%, Win Rate: 59.80%, Number of Trades: 1694, CAGR: 15.02%, Sortino: 1.88
 
-Figure 3 represents the multi-stock portfolio backtesting visualization with three comprehensive panels:
+<br> 
+<br> 
+<br> 
+
+![](vizualizations/Figure_4.png)
+### Figure 4: Multi-Stock Portfolio Analysis Dashboard
+
+Figure **3** and **4** represents the multi-stock portfolio backtesting visualization with three comprehensive panels:
+
+
+
+<br> 
+
 
 1. **Portfolio Performance Panel (Top)**
 - Blue line tracks the portfolio's normalized value
