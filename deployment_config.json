@@ -1,0 +1,10 @@
+{
+  "contract_address": "0d835ed8ba506f02603bac2d2f3f8519e33dbcbc058fda9ea1762a5ab6188f6a",
+  "network": "devnet",
+  "modules": {
+    "simple_signal_executor": "0d835ed8ba506f02603bac2d2f3f8519e33dbcbc058fda9ea1762a5ab6188f6a::simple_signal_executor",
+    "simple_risk_management": "0d835ed8ba506f02603bac2d2f3f8519e33dbcbc058fda9ea1762a5ab6188f6a::simple_risk_management"
+  },
+  "deployment_time": 1753973270,
+  "version": "2.0.0"
+}

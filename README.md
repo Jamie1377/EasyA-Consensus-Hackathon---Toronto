@@ -1,6 +1,4 @@
 # EasyA-Consensus-Hackathon---Toronto
-![](image.png) ![alt text](image-1.png)
-
 ## Educational Disclaimer
 
 This repository contains code developed for the EasyA Consensus Hackathon in **Toronto, Canada**. This project is:

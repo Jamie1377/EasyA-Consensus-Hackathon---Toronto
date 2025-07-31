@@ -1,0 +1,9 @@
+[package]
+name = "trading_bot"
+version = "2.0.0"
+
+[addresses]
+trading_bot = "0d835ed8ba506f02603bac2d2f3f8519e33dbcbc058fda9ea1762a5ab6188f6a"
+
+[dependencies]
+AptosFramework = { git = "https://github.com/aptos-labs/aptos-core.git", subdir = "aptos-move/framework/aptos-framework", rev = "aptos-cli-v4.2.0" }
