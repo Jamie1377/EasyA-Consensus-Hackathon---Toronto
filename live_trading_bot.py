@@ -24,7 +24,8 @@ try:
         calculate_hengtrader_indicators,
     )
     from predictor import StockPredictor
-    from aptos_integration_v3_1 import AptosBacktester
+    from backtester import AptosBacktester
+
     logging.info("✅ Successfully imported your private_strat.py!")
     STRATEGY_AVAILABLE = True
 except ImportError as e:
@@ -143,9 +144,7 @@ class LiveTradingBot:
         try:
             if not STRATEGY_AVAILABLE:
                 # Fallback to simple signal generation
-                logger.warning(
-                    "⚠️ Strategy not available, using simple fallback signal"
-                )       
+                logger.warning("⚠️ Strategy not available, using simple fallback signal")
                 return await self._generate_simple_signal(symbol)
 
             # Create predictor with recent data (last 200 days for technical indicators)

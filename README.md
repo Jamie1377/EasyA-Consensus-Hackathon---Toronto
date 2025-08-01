@@ -1,18 +1,45 @@
-# EasyA-Consensus-Hackathon---Toronto
-## Educational Disclaimer
+ # EasyA Consensus Hackathon Toronto (Aptos Track)
 
-This repository contains code developed for the EasyA Consensus Hackathon in **Toronto, Canada**. This project is:
-- **PURELY EDUCATIONAL** and created for learning blockchain development concepts
-- **NOT ASSOCIATED** with any real cryptocurrency trading or financial activities
-- **NO REAL FUNDS** were used or are intended to be used with this codebase
-- **DEVELOPED SOLELY** for demonstration of technical concepts in a hackathon environment
+<div style="display: flex; justify-content: left; gap: 1em;">
+  <img src="vizualizations/easya_consensus_hackathon.webp" alt="Dashboard 1" width="20%" height="20%"/>
+  <img src="vizualizations/Aptos.png" alt="Dashboard 2" width="20%" height="20%"/>
+</div>
+<br>
 
-This project is **NOT** intended for production use or financial applications in the current stage.
+ **Proof-of-concept** combining Python ML strategies with on-chain execution on Aptos.
+
+ - **Python**: Technical indicators, ML models, backtesting (`predictor.py`, `Backtester`).
+ - **Move Contracts**: Trading, risk management, signal executor (`move_contracts/sources`).
+ - **On-Chain Bridge**: Python wrapper for Move calls (`onchain_backtest.py`).
+ - **Deployment**: Automated compile, publish, tests (`deploy_contracts.py`).
+
+ ## Table of Contents
+ 1. [Modules Overview](#modules-overview)
+ 2. [Project Description](#project-description)
+ 3. [Usage Examples](#usage-examples)
+ 4. [Visualization](#visualization)
+ 5. [How to Start](#how-to-start)
+
+ ## Modules Overview
+
+- **`predictor.py`**: Signal generation, feature flags (Fourier, PCA, rolling stats).
+- **`backtester.py`**: Dedicated backtesting module. Contains `AptosBacktester` class, stock selection, signal generators, and all backtest-related utilities. (All backtesting logic previously in `aptos_integration_v3_1.py` is now here.)
+- **`onchain_backtest.py`**: Async Python API for Move backtests (initialize, add data, run, results).
+- **`deploy_contracts.py`**: Aptos CLI integration to compile, publish, fund, and test Move modules.
+- **Move Contracts** in `move_contracts/sources`:
+  - `minimal_trading.move`: Trade counter, `execute_trade_with_counterparty` for AptosCoin transfer.
+  - `simple_risk_management.move`: On-chain risk limits, daily loss, emergency stop.
+  - `simple_signal_executor.move`: Signal intake, confidence check, execution eventing.
 
 ## Project Description
-This project builts based on [the repo from aptos-agent from aptos-labs](https://github.com/aptos-labs/aptos-agent). Thanks to the Aptos for the support during the hackathon.
+This project builts based on [the repo from aptos-agent from aptos-labs](https://github.com/aptos-labs/aptos-agent). Thanks to the Aptos for the support and guidance during the hackathon.
 
-Aptos Agent Backtester: AI/ML-Powered Blockchain Trading Aptos Agent combines machine learning prediction with Aptos blockchain execution for automated trading. Features include **technical analysis signals**, on-chain transaction execution, **wallet management**, comprehensive **backtesting**, real-time **portfolio tracking**, and risk management parameters for DeFi traders.
+
+**Aptos Agent Backtester:**
+AI/ML-Powered Blockchain Trading Aptos Agent combines machine learning prediction with Aptos blockchain execution for automated trading. Features include **technical analysis signals**, on-chain transaction execution, **wallet management**, comprehensive **backtesting** (now modularized in `backtester.py`), real-time **portfolio tracking**, and risk management parameters for DeFi traders.
+
+**Modular Backtesting Architecture:**
+All backtesting logic, including the `AptosBacktester` class, signal generators, stock selection, and performance reporting, has been moved from `aptos_integration_v3_1.py` to a dedicated `backtester.py` module. This improves code organization, maintainability, and extensibility. Other modules now import backtesting functionality from `backtester.py`.
 
 
 Here is the snapshot of the output. 
@@ -88,6 +115,29 @@ We specifically leveraged Aptos's unique features:
 4. **Aptos Tokenization Framework** - For portfolio management and tracking digital assets
 
 5. **Fast Finality** - Aptos's sub-second finality ensures our trading signals are executed promptly, reducing slippage in volatile markets
+
+### On-Chain Integration Features
+This project now includes full on-chain execution and risk management via Move smart contracts, integrated with Python:
+
+- **Minimal Trading Module** (`minimal_trading.move`)
+  - Simple counter resource tracks number of trades
+  - `execute_trade_with_counterparty` entry function performs APTOS coin transfers to counterparties
+- **Risk Management Module** (`simple_risk_management.move`)
+  - On-chain `RiskManager` resource enforces per-trade position size, daily loss limits, and emergency stop
+  - Includes `check_trade_risk`, `update_daily_loss`, and viewpoint functions (`get_risk_status`, `can_open_position`)
+- **Signal Executor Module** (`simple_signal_executor.move`)
+  - Receives Python-generated signals on-chain as events
+  - Verifies confidence thresholds and emits execution events
+  - Tracks execution results and allows batch processing
+
+#### Python On-Chain Bridge
+- **AptosOnChainBacktester** (`onchain_backtest.py`)
+  - Wraps Move contract calls to initialize backtests, add price data, run steps, and retrieve results
+- **Deployment & Testing Script** (`deploy_contracts.py`)
+  - Automates `aptos move compile`, `publish`, and faucet funding
+  - Runs local Move tests and on-chain transaction tests for all modules
+
+With these additions, trading strategies developed in Python can be deployed, executed, and managed entirely on-chain for transparent, auditable execution.
 
 <!-- What makes our project uniquely possible on Aptos is the combination of their high-performance blockchain (over 160,000 TPS) with sub-second finality, which is essential for algorithmic trading where execution speed matters. The Move language's resource-oriented programming also provides better security guarantees for managing user funds in a DeFi context compared to other blockchain environments. -->
 

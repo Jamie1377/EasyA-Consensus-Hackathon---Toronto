@@ -1,6 +1,6 @@
 # Check entry points for trading
 from predictor import StockPredictor
-from aptos_integration_v3_1 import AptosBacktester, create_signal_generator
+from backtester import AptosBacktester, create_signal_generator
 import yfinance as yf
 import pandas as pd
 import numpy as np
@@ -393,6 +393,3 @@ def apply_strategy_screener(criteria, limit=20):
 
     # Return results
     return pd.DataFrame(matched_stocks).head(limit)
-
-
-
