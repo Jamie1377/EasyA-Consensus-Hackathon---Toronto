@@ -4,13 +4,11 @@ warnings.filterwarnings("ignore")
 
 import numpy as np
 import yfinance as yf
-
 import pandas as pd
 from datetime import date, timedelta, datetime
-
-
 import matplotlib.pyplot as plt
 import pandas_market_calendars as mcal
+from numba import jit, njit, prange, float64
 
 
 # Sample Dataset
@@ -270,7 +268,7 @@ class StockPredictor:
 
         # Return as pandas Series with the same index
         return pd.Series(rsi, index=self.data.index)
-
+    
     def _compute_atr(self, window=14):
         """Average True Range"""
         high_low = self.data["High"] - self.data["Low"]
@@ -280,7 +278,7 @@ class StockPredictor:
         # Using NumPy for rolling mean
         return pd.Series(self._rolling_mean_numpy(tr, window), index=tr.index)
 
-    def _rolling_mean_numpy(self, data, window):
+    def _rolling_mean_numpy(self, data: pd.Series, window: int):
         """
         Calculate rolling mean using NumPy's convolve function for better performance
         """
@@ -336,24 +334,27 @@ class StockPredictor:
         close_values = self.data["Close"].values
 
         # Standard deviation using NumPy's rolling window
-        def np_rolling_std(values, window):
+        def np_rolling_std(values: np.ndarray, window: int):
             result = np.full(len(values), np.nan)
             for i in range(window - 1, len(values)):
                 result[i] = np.std(values[i - window + 1 : i + 1], ddof=1)
             return result
 
-        def np_rolling_min(values, window):
+        @jit
+        def np_rolling_min(values: np.ndarray, window: int):
             result = np.full(len(values), np.nan)
             for i in range(window - 1, len(values)):
                 result[i] = np.min(values[i - window + 1 : i + 1])
             return result
 
+        @jit
         def np_rolling_median(values, window):
             result = np.full(len(values), np.nan)
             for i in range(window - 1, len(values)):
                 result[i] = np.median(values[i - window + 1 : i + 1])
             return result
 
+        @jit
         def np_rolling_sum(values, window):
             result = np.full(len(values), np.nan)
             weights = np.ones(window)
@@ -361,13 +362,14 @@ class StockPredictor:
             result[window - 1 :] = convolved
             return result
 
-        def np_rolling_var(values, window):
+        def np_rolling_var(values: np.ndarray, window: int):
             result = np.full(len(values), np.nan)
             for i in range(window - 1, len(values)):
                 result[i] = np.var(values[i - window + 1 : i + 1], ddof=1)
             return result
 
-        def np_rolling_ema(values, span):
+        @jit(nopython=True, parallel=True)
+        def np_rolling_ema(values: np.ndarray, span: int):
             alpha = 2 / (span + 1)
             result = np.full(len(values), np.nan)
             result[0] = values[0]
@@ -396,6 +398,7 @@ class StockPredictor:
         )  # Exponential Moving Average
 
         # Add rolling quantiles (25th and 75th percentiles) using NumPy
+        @jit
         def np_rolling_quantile(values, window, quantile):
             result = np.full(len(values), np.nan)
             for i in range(window - 1, len(values)):
@@ -423,6 +426,7 @@ class StockPredictor:
         self.data["MACD"] = pd.Series(macd, index=self.data.index)
         self.data.dropna(inplace=True)
         ### 5. Williams %R with NumPy optimization
+        @jit
         def np_rolling_max(values, window):
             result = np.full(len(values), np.nan)
             for i in range(window - 1, len(values)):

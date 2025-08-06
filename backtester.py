@@ -24,7 +24,7 @@ from matplotlib.lines import Line2D
 import matplotlib.patches as mpatches
 import random
 from pytickersymbols import PyTickerSymbols
-
+from numba import jit
 
 # Configure a shared logger for the backtester module
 log_directory = os.path.dirname(os.path.abspath(__file__))
@@ -175,6 +175,7 @@ class AptosBacktester:
         )
 
         return True
+
 
     def execute_buy(self, symbol, price, quantity, timestamp=None):
         """Execute a buy order for a specific symbol"""
@@ -369,7 +370,7 @@ class AptosBacktester:
         self.logger.info(f"On-chain SELL transaction hash: {tx_hash}")
 
         return True
-
+    
     def update_portfolio_value(self, symbol_prices=None, timestamp=None):
         """Calculate current portfolio value and record to history, supporting short positions and multiple symbols"""
         if timestamp is None:
@@ -1694,7 +1695,6 @@ class AptosBacktester:
             return metrics.get("yearly return", 0) > 0.02
 
 
-
 def select_stocks(
     num_stocks=5,
     universe="NASDAQ 100",
@@ -1830,7 +1830,9 @@ def select_stocks(
 
                 # 3. Technical indicators
                 # a. Moving averages using numpy's convolve function
-                def np_rolling_mean(values, window):
+
+                @jit(nopython=True, cache=True)
+                def np_rolling_mean(values: np.ndarray, window: int):
                     """Calculate rolling mean using NumPy's convolve"""
                     window_size = min(window, len(values))
                     weights = np.ones(window_size) / window_size
@@ -2398,4 +2400,5 @@ async def main():
     logger.info(f"Sortino Ratio: {onchain_results['sortino']:.2f}")
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    # asyncio.run(main())
+    import asyncio

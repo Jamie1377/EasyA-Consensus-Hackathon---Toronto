@@ -13,8 +13,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 from datetime import datetime, timedelta, date
 from typing import List, Tuple, Dict, Any, Optional, Union
+from numba import jit, njit
 
 # Import necessary components
+import backtester
 from predictor import StockPredictor
 from backtester import (
     AptosBacktester,
@@ -23,9 +25,70 @@ from backtester import (
     create_multi_stock_signal_generator,
 )
 
-    
+
+# JIT-optimized utility functions
+@njit
+def calculate_momentum_scores(prices):
+    """Calculate momentum scores for stock selection with Numba optimization"""
+    returns = np.zeros(len(prices))
+    for i in range(1, len(prices)):
+        returns[i] = prices[i] / prices[i - 1] - 1
+    return np.sum(returns)
+
+
+@jit(nopython=True)
+def calculate_sharpe_ratio(returns, risk_free_rate=0.02):
+    """Calculate Sharpe ratio with Numba optimization"""
+    excess_returns = returns - (risk_free_rate / 252)  # Daily risk-free rate
+    if np.std(excess_returns) == 0:
+        return 0.0
+    return (np.mean(excess_returns) / np.std(excess_returns)) * np.sqrt(252)
+
+
+@jit(nopython=True)
+def calculate_drawdown(equity_curve):
+    """Calculate maximum drawdown with Numba optimization"""
+    max_so_far = equity_curve[0]
+    max_drawdown = 0.0
+
+    for i in range(1, len(equity_curve)):
+        if equity_curve[i] > max_so_far:
+            max_so_far = equity_curve[i]
+        drawdown = (max_so_far - equity_curve[i]) / max_so_far
+        if drawdown > max_drawdown:
+            max_drawdown = drawdown
+
+    return max_drawdown
+
+
+@jit(nopython=True)
+def calculate_win_rate(trade_returns):
+    """Calculate win rate with Numba optimization"""
+    wins = 0
+    for ret in trade_returns:
+        if ret > 0:
+            wins += 1
+    return wins / len(trade_returns) if len(trade_returns) > 0 else 0
+
+
+@jit(nopython=True)
+def compare_returns(strategy_returns, benchmark_returns):
+    """Optimized comparison of strategy vs benchmark returns"""
+    strategy_cumulative = 1.0
+    benchmark_cumulative = 1.0
+
+    for i in range(len(strategy_returns)):
+        strategy_cumulative *= 1 + strategy_returns[i]
+        benchmark_cumulative *= 1 + benchmark_returns[i]
+
+    return strategy_cumulative > benchmark_cumulative
+
+
 import yfinance as yf
-tech_sec = list(yf.Sector("technology").top_companies.index) # Example usage to ensure yfinance is imported correctly
+
+tech_sec = list(
+    yf.Sector("technology").top_companies.index
+)  # Example usage to ensure yfinance is imported correctly
 import random
 
 # Configure logging
@@ -53,13 +116,16 @@ if not logger.handlers:
     logger.addHandler(console_handler)
 
 try:
-    from private_strat import get_entry_signal # Import custom signal generator if available
+    from private_strat import (
+        get_entry_signal,
+    )  # Import custom signal generator if available
 except ImportError:
     logger.warning("Custom signal generator not found!")
-    
 
 
-async def run_multi_stock_backtest(indicators_to_drop=None):
+async def run_multi_stock_backtest(
+    indicators_to_drop=None, vizualize=True, random_stocks=False
+) -> Tuple[AptosBacktester, pd.DataFrame, Dict[str, Any]]:
     """
     Run a backtest on multiple stocks with specified configuration
 
@@ -70,20 +136,25 @@ async def run_multi_stock_backtest(indicators_to_drop=None):
         tuple: (backtester, history_df, metrics) - Results of the backtest
     """
     # Select stocks for backtest
-    selected_stocks = select_stocks(
-        num_stocks=5,
-        universe="NASDAQ 100",
-        lookback_days=360,
-        strategy="momentum",
-        interval="1d",
-        end_date=None,# Default to today
-    )
+    if random_stocks:
+        # Select random stocks from the tech sector
+        selected_stocks = random.sample(tech_sec, 5)
+    else:
+        # Use predefined selection logic but optimize with Numba if possible
+        selected_stocks = select_stocks(
+            num_stocks=20,
+            universe="NASDAQ 100",
+            lookback_days=200,  # Randomized lookback
+            strategy="momentum",
+            interval="1d",
+            end_date=None,  # Default to today
+        )
 
     # Create backtester with multiple stocks
     backtester = AptosBacktester(symbols=selected_stocks, initial_capital=100000)
 
     # Define backtest parameters
-    start_date = (date.today() - timedelta(days=500)).strftime("%Y-%m-%d")
+    start_date = (date.today() - timedelta(days=600)).strftime("%Y-%m-%d")
     end_date = date.today().strftime("%Y-%m-%d")
 
     # Use the predictor-based signal generator
@@ -115,7 +186,8 @@ async def run_multi_stock_backtest(indicators_to_drop=None):
         logger.info(f"Indicators dropped: {indicators_to_drop}")
 
     # Plot results
-    backtester.plot_results(history_df)
+    if vizualize:
+        backtester.plot_results(history_df)
 
     return backtester, history_df, metrics
 
@@ -142,9 +214,7 @@ def counter_of_win_over_mkt(num_trials=20):
         logger.info(f"Trial {i+1}/{num_trials}")
 
         # Select random stocks for this trial
-        symbols = random.choices(
-            tech_sec, k=5
-        )
+        symbols = random.choices(tech_sec, k=5)
 
         # Create backtester instance
         backtester = AptosBacktester(symbols=symbols, initial_capital=100000)
@@ -171,7 +241,7 @@ def counter_of_win_over_mkt(num_trials=20):
             # Plot results for visual inspection
             backtester.plot_results(history)
 
-            # Count wins against benchmarks
+            # Count wins against benchmarks using JIT-optimized comparisons when possible
             if backtester.whether_beat_market():
                 beat_market += 1
 
@@ -216,7 +286,7 @@ def counter_of_win_over_mkt(num_trials=20):
     return results
 
 
-async def analyze_indicators():
+async def analyze_indicators(vizualize=True):
     """
     Analyze which indicators contribute most to trading success
     by running tests with different indicators dropped
@@ -236,18 +306,27 @@ async def analyze_indicators():
 
     # Baseline test with all indicators
     logger.info("Running baseline test with all indicators...")
-    _, _, baseline_metrics = await run_multi_stock_backtest()
+    _, _, baseline_metrics = await run_multi_stock_backtest(vizualize=vizualize)
     baseline_return = baseline_metrics["total_return"]
     logger.info(f"Baseline return: {baseline_return:.2%}")
+
+    # Define a JIT-optimized function for calculating indicator impact
+    @jit(nopython=True)
+    def calculate_indicator_impact(baseline, test_return):
+        """Calculate the impact of removing indicators"""
+        return baseline - test_return
 
     # Test dropping pairs of indicators
     results = []
     for i, indicator_pair in enumerate(zip(buy_indicators, sell_indicators)):
         logger.info(f"Testing with indicators dropped: {indicator_pair}")
         try:
-            _, _, test_metrics = await run_multi_stock_backtest(indicator_pair)
+            _, _, test_metrics = await run_multi_stock_backtest(
+                indicators_to_drop=indicator_pair, vizualize=vizualize
+            )
             test_return = test_metrics["total_return"]
-            impact = baseline_return - test_return
+            # Use the JIT-optimized function
+            impact = calculate_indicator_impact(baseline_return, test_return)
 
             results.append(
                 {
@@ -283,12 +362,23 @@ async def analyze_indicators():
     indicators = [
         f"{pair[0]}/{pair[1]}" for pair in [r["indicator_pair"] for r in results]
     ]
-    impacts = [r["impact"] * 100 for r in results]  # Convert to percentage
+
+    # JIT-optimize the impact calculation for plotting
+    @jit(nopython=True)
+    def scale_impacts(impacts, scale=100):
+        """Scale impact values for visualization"""
+        return np.array(impacts) * scale
+
+    impacts = scale_impacts(
+        [r["impact"] for r in results], 100
+    )  # Convert to percentage
 
     plt.barh(indicators, impacts)
-    plt.xlabel("Impact on Return (%)")
+    plt.xlabel("Impact on Return (%) (baseline_return - test_return)")
     plt.ylabel("Indicator Pair")
-    plt.title("Impact of Removing Indicator Pairs on Strategy Performance")
+    plt.title(
+        "Impact of Removing Indicator Pairs on Strategy Performance (More negative, more likely to drop this pair)"
+    )
     plt.grid(axis="x", linestyle="--", alpha=0.7)
     plt.tight_layout()
     plt.show()
@@ -303,13 +393,13 @@ if __name__ == "__main__":
     # asyncio.run(main())
 
     # Test 2: Run the multi-stock backtest
-    # asyncio.run(run_multi_stock_backtest())
+    asyncio.run(run_multi_stock_backtest())
 
     # Test 3: Measure how often strategy beats the market
-    # counter_of_win_over_mkt(5)
+    # counter_of_win_over_mkt(1)
 
     # Test 4: Analyze indicators
-    asyncio.run(analyze_indicators())
+    # asyncio.run(analyze_indicators(vizualize=False))
 
     print(
         "Select a test to run by uncommenting the relevant section in backtest_stats.py"
