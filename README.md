@@ -16,15 +16,14 @@
  ## Table of Contents
  1. [Modules Overview](#modules-overview)
  2. [Project Description](#project-description)
- 3. [Usage Examples](#usage-examples)
- 4. [Visualization](#visualization)
- 5. [How to Start](#how-to-start)
+ 3. [Technical Explanation](#technical-explanation)
+ 4. [How to Start](#how-to-start)
 
  ## Modules Overview
 
 - **`predictor.py`**: Signal generation, feature flags (Fourier, PCA, rolling stats).
 - **`backtester.py`**: Dedicated backtesting module. Contains `AptosBacktester` class, stock selection, signal generators, and all backtest-related utilities. (All backtesting logic previously in `aptos_integration_v3_1.py` is now here.)
-- **`onchain_backtest.py`**: Async Python API for Move backtests (initialize, add data, run, results).
+<!--- - **`onchain_backtest.py`**: Async Python API for Move backtests (initialize, add data, run, results).-->
 - **`deploy_contracts.py`**: Aptos CLI integration to compile, publish, fund, and test Move modules.
 - **Move Contracts** in `move_contracts/sources`:
   - `minimal_trading.move`: Trade counter, `execute_trade_with_counterparty` for AptosCoin transfer.
@@ -131,9 +130,9 @@ This project now includes full on-chain execution and risk management via Move s
   - Tracks execution results and allows batch processing
 
 #### Python On-Chain Bridge
-- **AptosOnChainBacktester** (`onchain_backtest.py`)
-  - Wraps Move contract calls to initialize backtests, add price data, run steps, and retrieve results
-- **Deployment & Testing Script** (`deploy_contracts.py`)
+<!-- - **AptosOnChainBacktester** (`onchain_backtest.py`)
+  - Wraps Move contract calls to initialize backtests, add price data, run steps, and retrieve results   -->
+- **Deployment & Testing Script** (`deploy_contracts.py`) 
   - Automates `aptos move compile`, `publish`, and faucet funding
   - Runs local Move tests and on-chain transaction tests for all modules
 
@@ -171,7 +170,7 @@ The multi-stock portfolio backtest implementation employs a sophisticated adapti
    * Hard stop-losses at predetermined maximum loss thresholds
    * Portfolio-level diversification rules to limit exposure to similar assets
 
-## Setup Instructions
+## How to Start
 
 ### Prerequisites
 - Python 3.9+
